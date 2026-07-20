@@ -49,5 +49,13 @@ public class Livro {
     @PrePersist
     public void prePersist() {
         this.dataCadastro = LocalDateTime.now();
+
+        if (status == null) {
+            status = StatusLivro.DISPONIVEL;
+        }
+
+        if (disponivel == null) {
+            disponivel = true;
+        }
     }
 }
