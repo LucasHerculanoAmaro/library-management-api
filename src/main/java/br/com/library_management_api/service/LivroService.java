@@ -4,6 +4,8 @@ import br.com.library_management_api.dto.request.LivroRequest;
 import br.com.library_management_api.dto.response.LivroResponse;
 import br.com.library_management_api.entity.Livro;
 import br.com.library_management_api.enums.StatusLivro;
+import br.com.library_management_api.exception.DuplicateResourceException;
+import br.com.library_management_api.exception.ResourceNotFoundException;
 import br.com.library_management_api.repository.LivroRepository;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +23,7 @@ public class LivroService {
     public LivroResponse cadastrar(LivroRequest request) {
 
         if (livroRepository.existsByIsbn(request.getIsbn())) {
-            throw new RuntimeException("Já existe um livro cadastrado com este ISBN.");
+            throw new DuplicateResourceException("Já existe um livro cadastrado com este ISBN.");
         }
 
         Livro livro = Livro.builder()
@@ -48,7 +50,7 @@ public class LivroService {
     public LivroResponse buscarPorId(Long id) {
 
         Livro livro = livroRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Livro não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Livro não encontrado."));
 
         return converterParaResponse(livro);
     }
@@ -56,7 +58,7 @@ public class LivroService {
     public LivroResponse atualizar(Long id, LivroRequest request) {
 
         Livro livro = livroRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Livro não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Livro não encontrado."));
 
         livro.setTitulo(request.getTitulo());
         livro.setAutor(request.getAutor());
@@ -70,7 +72,7 @@ public class LivroService {
     public void excluir(Long id) {
 
         Livro livro = livroRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Livro não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Livro não encontrado."));
 
         livroRepository.delete(livro);
     }

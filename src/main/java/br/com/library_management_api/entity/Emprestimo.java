@@ -49,6 +49,11 @@ public class Emprestimo {
             this.dataPrevistaDevolucao = dataEmprestimo.plusDays(7);
         }
 
+        if (this.status == null) {
+            this.status = StatusEmprestimo.ATIVO;
+        }
+
         this.status = StatusEmprestimo.ATIVO;
+
     }
 }

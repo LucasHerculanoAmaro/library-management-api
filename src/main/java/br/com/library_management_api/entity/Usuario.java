@@ -45,6 +45,7 @@ public class Usuario {
     @Column(nullable = false)
     private Perfil perfil;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean ativo = true;
 
