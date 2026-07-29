@@ -49,9 +49,13 @@ public class Usuario {
     @Column(nullable = false)
     private Boolean ativo = true;
 
+    @OneToMany(mappedBy = "usuario")
+    private List<Reserva> reservas;
+
     // Relacionamento
     @OneToMany(mappedBy = "usuario")
     private List<Emprestimo> emprestimos;
+
 
     // Campo de auditoria
     @Column(nullable = false, updatable = false)

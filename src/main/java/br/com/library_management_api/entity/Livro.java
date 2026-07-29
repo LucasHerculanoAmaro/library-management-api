@@ -46,6 +46,9 @@ public class Livro {
     @OneToMany(mappedBy = "livro")
     private List<Emprestimo> emprestimos;
 
+    @OneToMany(mappedBy = "livro")
+    private List<Reserva> reservas;
+
     @PrePersist
     public void prePersist() {
         this.dataCadastro = LocalDateTime.now();

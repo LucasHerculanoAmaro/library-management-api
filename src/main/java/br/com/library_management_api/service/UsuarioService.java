@@ -21,6 +21,7 @@ public class UsuarioService {
         this.usuarioRepository = usuarioRepository;
     }
 
+    // CRUD
     public UsuarioResponse cadastrar(UsuarioRequest usuarioRequest) {
         if (usuarioRepository.existsByCpf(usuarioRequest.getCpf())) {
             throw new DuplicateResourceException("CPF já cadastrado");
@@ -85,6 +86,25 @@ public class UsuarioService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
 
         usuarioRepository.delete(usuario);
+    }
+
+    // Filtros
+    public UsuarioResponse buscarPorCpf(String cpf) {
+
+        Usuario usuario = usuarioRepository.findByCpf(cpf)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Usuário não encontrado."));
+
+        return converterParaResponse(usuario);
+    }
+
+    public UsuarioResponse buscarPorEmail(String email) {
+
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Usuário não encontrado."));
+
+        return converterParaResponse(usuario);
     }
 
     private UsuarioResponse converterParaResponse(Usuario usuario) {

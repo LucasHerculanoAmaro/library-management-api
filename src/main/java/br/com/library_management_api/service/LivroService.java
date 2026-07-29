@@ -20,6 +20,7 @@ public class LivroService {
         this.livroRepository = livroRepository;
     }
 
+    // CRUD
     public LivroResponse cadastrar(LivroRequest request) {
 
         if (livroRepository.existsByIsbn(request.getIsbn())) {
@@ -75,6 +76,40 @@ public class LivroService {
                 .orElseThrow(() -> new ResourceNotFoundException("Livro não encontrado."));
 
         livroRepository.delete(livro);
+    }
+
+    // Filtros
+    public List<LivroResponse> buscarPorTitulo(String titulo) {
+
+        return livroRepository.findByTituloContainingIgnoreCase(titulo)
+                .stream()
+                .map(this::converterParaResponse)
+                .toList();
+    }
+
+    public List<LivroResponse> buscarPorAutor(String autor) {
+
+        return livroRepository.findByAutorContainingIgnoreCase(autor)
+                .stream()
+                .map(this::converterParaResponse)
+                .toList();
+    }
+
+    public LivroResponse buscarPorIsbn(String isbn) {
+
+        Livro livro = livroRepository.findByIsbn(isbn)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Livro não encontrado."));
+
+        return converterParaResponse(livro);
+    }
+
+    public List<LivroResponse> listarDisponiveis() {
+
+        return livroRepository.findByDisponivelTrue()
+                .stream()
+                .map(this::converterParaResponse)
+                .toList();
     }
 
     private LivroResponse converterParaResponse(Livro livro) {

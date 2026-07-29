@@ -5,6 +5,7 @@ import br.com.library_management_api.dto.response.UsuarioResponse;
 import br.com.library_management_api.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -47,5 +48,19 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void excluir(@PathVariable Long id) {
         usuarioService.excluir(id);
+    }
+
+    @GetMapping("/cpf/{cpf}")
+    public ResponseEntity<UsuarioResponse> buscarPorCpf(
+            @PathVariable String cpf) {
+
+        return ResponseEntity.ok(usuarioService.buscarPorCpf(cpf));
+    }
+
+    @GetMapping("/email/{email}")
+    public ResponseEntity<UsuarioResponse> buscarPorEmail(
+            @PathVariable String email) {
+
+        return ResponseEntity.ok(usuarioService.buscarPorEmail(email));
     }
 }
