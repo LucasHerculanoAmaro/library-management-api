@@ -3,11 +3,17 @@ package br.com.library_management_api.service;
 import br.com.library_management_api.dto.request.LivroRequest;
 import br.com.library_management_api.dto.response.LivroResponse;
 import br.com.library_management_api.entity.Livro;
+import br.com.library_management_api.enums.StatusEmprestimo;
 import br.com.library_management_api.enums.StatusLivro;
+import br.com.library_management_api.exception.BusinessException;
 import br.com.library_management_api.exception.DuplicateResourceException;
 import br.com.library_management_api.exception.ResourceNotFoundException;
+import br.com.library_management_api.repository.EmprestimoRepository;
 import br.com.library_management_api.repository.LivroRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -15,16 +21,18 @@ import java.util.List;
 public class LivroService {
 
     private final LivroRepository livroRepository;
+    private final EmprestimoRepository emprestimoRepository;
 
-    public LivroService(LivroRepository livroRepository) {
+    public LivroService(LivroRepository livroRepository, EmprestimoRepository emprestimoRepository) {
         this.livroRepository = livroRepository;
+        this.emprestimoRepository = emprestimoRepository;
     }
 
     // CRUD
     public LivroResponse cadastrar(LivroRequest request) {
 
         if (livroRepository.existsByIsbn(request.getIsbn())) {
-            throw new DuplicateResourceException("Já existe um livro cadastrado com este ISBN.");
+            throw new DuplicateResourceException("Já existe um livro com o ISBN " + request.getIsbn() + ".");
         }
 
         Livro livro = Livro.builder()
@@ -40,26 +48,39 @@ public class LivroService {
         return converterParaResponse(livro);
     }
 
-    public List<LivroResponse> listar() {
-
-        return livroRepository.findAll()
-                .stream()
-                .map(this::converterParaResponse)
+    @Transactional
+    public List<LivroResponse> cadastrarEmLote(List<LivroRequest> request) {
+        return request.stream()
+                .map(this::cadastrar)
                 .toList();
+    }
+
+    public Page<LivroResponse> listar(Pageable pageable) {
+
+        return livroRepository.findAll(pageable)
+                .map(this::converterParaResponse);
     }
 
     public LivroResponse buscarPorId(Long id) {
 
         Livro livro = livroRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Livro não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Livro com id: " + id + " não encontrado."));
 
         return converterParaResponse(livro);
     }
 
+    @Transactional
     public LivroResponse atualizar(Long id, LivroRequest request) {
 
         Livro livro = livroRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Livro não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Livro com id: " + id + " não encontrado."));
+
+        if (!livro.getIsbn().equals(request.getIsbn())
+                && livroRepository.existsByIsbn(request.getIsbn())) {
+            throw new DuplicateResourceException(
+                    "Já existe um livro com o ISBN " + request.getIsbn() + "."
+            );
+        }
 
         livro.setTitulo(request.getTitulo());
         livro.setAutor(request.getAutor());
@@ -70,10 +91,22 @@ public class LivroService {
         return converterParaResponse(livro);
     }
 
+    @Transactional
     public void excluir(Long id) {
 
         Livro livro = livroRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Livro não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Livro com id: " + id + " não encontrado."));
+
+        boolean possuiEmprestimoAtivo = emprestimoRepository.existsByLivroAndStatus(
+                livro,
+                StatusEmprestimo.ATIVO
+        );
+
+        if (possuiEmprestimoAtivo) {
+            throw new BusinessException(
+                    "Não é possível excluir um livro com empréstimo ativo"
+            );
+        }
 
         livroRepository.delete(livro);
     }
@@ -99,7 +132,7 @@ public class LivroService {
 
         Livro livro = livroRepository.findByIsbn(isbn)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Livro não encontrado."));
+                        new ResourceNotFoundException("Livro com ISBN " + isbn + "não encontrado."));
 
         return converterParaResponse(livro);
     }

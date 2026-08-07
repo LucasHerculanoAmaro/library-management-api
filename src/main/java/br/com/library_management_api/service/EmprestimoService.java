@@ -2,6 +2,7 @@ package br.com.library_management_api.service;
 
 import br.com.library_management_api.dto.request.EmprestimoRequest;
 import br.com.library_management_api.dto.response.EmprestimoResponse;
+import br.com.library_management_api.dto.response.ReservaResponse;
 import br.com.library_management_api.entity.Emprestimo;
 import br.com.library_management_api.entity.Livro;
 import br.com.library_management_api.entity.Reserva;
@@ -15,6 +16,11 @@ import br.com.library_management_api.repository.EmprestimoRepository;
 import br.com.library_management_api.repository.LivroRepository;
 import br.com.library_management_api.repository.ReservaRepository;
 import br.com.library_management_api.repository.UsuarioRepository;
+import br.com.library_management_api.security.SecurityUtil;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,10 +53,14 @@ public class EmprestimoService {
     public EmprestimoResponse cadastrar(EmprestimoRequest request) {
 
         Usuario usuario = usuarioRepository.findById(request.getUsuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
+                                "Usuário com ID " + request.getUsuarioId() + " não encontrado."));
 
         Livro livro = livroRepository.findById(request.getLivroId())
-                .orElseThrow(() -> new ResourceNotFoundException("Livro não encontrado."));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
+                                "Livro com ID " + request.getLivroId() + " não encontrado."));
 
         if (!livro.getDisponivel()
                 && livro.getStatus() != StatusLivro.RESERVADO) {
@@ -97,18 +107,55 @@ public class EmprestimoService {
         return converterParaResponse(emprestimo);
     }
 
-    public List<EmprestimoResponse> listar() {
-
-        return emprestimoRepository.findAll()
-                .stream()
-                .map(this::converterParaResponse)
+    @Transactional
+    public List<EmprestimoResponse> cadastrarEmLote(
+            List<EmprestimoRequest> requests
+    ) {
+        return requests.stream()
+                .map(this::cadastrar)
                 .toList();
+    }
+
+    public Page<EmprestimoResponse> listar(Pageable pageable) {
+
+        return emprestimoRepository.findAll(pageable)
+                .map(this::converterParaResponse);
     }
 
     public EmprestimoResponse buscarPorId(Long id) {
 
         Emprestimo emprestimo = emprestimoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Empréstimo não encontrado."));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
+                                "Emprestimo com ID " + id + " não encontrado."
+                        )
+                );
+
+        String emailLogado = SecurityUtil.getUsuarioLogado();
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        boolean isAdmin =
+                authentication.getAuthorities()
+                        .stream()
+                        .anyMatch(
+                                role -> role.getAuthority()
+                                        .equals("ROLE_ADMIN")
+                        );
+
+        if (!isAdmin &&
+                !emprestimo.getUsuario()
+                        .getEmail()
+                        .equals(emailLogado)) {
+
+            throw new BusinessException(
+                    "Você só pode acessar seus próprios empréstimos."
+            );
+        }
+
 
         return converterParaResponse(emprestimo);
     }
@@ -117,10 +164,13 @@ public class EmprestimoService {
     public EmprestimoResponse devolver(Long id) {
 
         Emprestimo emprestimo = emprestimoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Emprestimo não encontrado."));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
+                                "Empréstimo com ID " + id + " não encontrado."));
 
         if (emprestimo.getStatus() == StatusEmprestimo.DEVOLVIDO) {
-            throw  new BusinessException("Empréstimo já devolvido.");
+            throw  new BusinessException(
+                    "Empréstimo já devolvido.");
         }
 
         Livro livro = emprestimo.getLivro();

@@ -2,35 +2,27 @@ package br.com.library_management_api.dto.response;
 
 import br.com.library_management_api.enums.StatusEmprestimo;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 import java.time.LocalDate;
 
-@Getter
-@Setter
-@NoArgsConstructor
+@Data
 @AllArgsConstructor
-@Builder
-@Schema(description = "Dados de um empréstimo.")
-public class EmprestimoResponse {
-
-    @Schema(
-            description = "ID do empréstimo.",
-            example = "1"
-    )
-    private Long id;
-
-    @Schema(
-            description = "Nome do usuário.",
-            example = "João Silva"
-    )
-    private String usuario;
+@Schema(description = "Relatório de empréstimos ativos.")
+public class EmprestimoAtivoResponse {
 
     @Schema(
             description = "Título do livro.",
-            example = "Clean Code"
+            example = "Spring Boot in Action"
     )
-    private String livro;
+    private String titulo;
+
+    @Schema(
+            description = "Nome do usuário.",
+            example = "Carlos Alberto"
+    )
+    private String usuario;
 
     @Schema(
             description = "Data do empréstimo."
@@ -43,12 +35,8 @@ public class EmprestimoResponse {
     private LocalDate dataPrevistaDevolucao;
 
     @Schema(
-            description = "Data da devolução."
-    )
-    private LocalDate dataDevolucao;
-
-    @Schema(
-            description = "Status do empréstimo."
+            description = "Status da devolução."
     )
     private StatusEmprestimo status;
+
 }

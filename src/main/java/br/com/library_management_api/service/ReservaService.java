@@ -14,6 +14,11 @@ import br.com.library_management_api.repository.EmprestimoRepository;
 import br.com.library_management_api.repository.LivroRepository;
 import br.com.library_management_api.repository.ReservaRepository;
 import br.com.library_management_api.repository.UsuarioRepository;
+import br.com.library_management_api.security.SecurityUtil;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,11 +49,13 @@ public class ReservaService {
 
         Usuario usuario = usuarioRepository.findById(request.getUsuarioId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Usuário não encontrado."));
+                        new ResourceNotFoundException(
+                                "Usuário com ID " + request.getUsuarioId() + " não encontrado."));
 
         Livro livro = livroRepository.findById(request.getLivroId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Livro não encontrado."));
+                        new ResourceNotFoundException(
+                                "Livro com ID " + request.getLivroId() + " não encontrado."));
 
         if (!usuario.getAtivo()) {
             throw new BusinessException(
@@ -88,19 +95,45 @@ public class ReservaService {
         return converterParaResponse(reserva);
     }
 
-    public List<ReservaResponse> listar() {
+    public Page<ReservaResponse> listar(Pageable pageable) {
 
-        return reservaRepository.findAll()
-                .stream()
-                .map(this::converterParaResponse)
-                .toList();
+        return reservaRepository.findAll(pageable)
+                .map(this::converterParaResponse);
     }
 
     public ReservaResponse buscarPorId(Long id) {
 
         Reserva reserva = reservaRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Reserva não encontrada."));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
+                                "Reserva com ID " + id + " não encontrada."
+                        )
+                );
+
+        String emailLogado = SecurityUtil.getUsuarioLogado();
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        boolean isAdmin =
+                authentication.getAuthorities()
+                        .stream()
+                        .anyMatch(
+                                role -> role.getAuthority()
+                                        .equals("ROLE_ADMIN")
+                        );
+
+        if (!isAdmin &&
+                !reserva.getUsuario()
+                        .getEmail()
+                        .equals(emailLogado)) {
+
+            throw new BusinessException(
+                    "Você só pode acessar suas próprias reservas."
+            );
+        }
 
         return converterParaResponse(reserva);
     }
@@ -110,7 +143,8 @@ public class ReservaService {
 
         Reserva reserva = reservaRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Reserva não encontrada."));
+                        new ResourceNotFoundException(
+                                "Reserva com ID " + id + " não encontrada."));
 
         if (reserva.getStatus() == StatusReserva.CANCELADA) {
             throw new BusinessException(
