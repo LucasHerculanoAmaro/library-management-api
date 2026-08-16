@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: library_postgres
+    restart: always
+
+    environment:
+      POSTGRES_DB: library_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    image: library-management-api:latest
+    container_name: library_api
+    restart: always
+
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
