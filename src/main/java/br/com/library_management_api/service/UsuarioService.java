@@ -19,9 +19,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 @Service
 public class UsuarioService {
 
@@ -152,6 +149,22 @@ public class UsuarioService {
                         "Usuário com ID " + id + " não encontrado."));
 
         usuario.setAtivo(false);
+
+        return converterParaResponse(
+                usuarioRepository.save(usuario)
+        );
+    }
+
+    @Transactional
+    public UsuarioResponse ativar(Long id) {
+
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Usuário com ID " + id + " não encontrado."
+                        ));
+
+        usuario.setAtivo(true);
 
         return converterParaResponse(
                 usuarioRepository.save(usuario)

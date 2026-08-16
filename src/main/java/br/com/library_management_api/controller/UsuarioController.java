@@ -58,7 +58,7 @@ public class UsuarioController {
         return usuarioService.listar(pageable);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USUARIO')")
     @GetMapping("/{id}")
     @Operation(
             summary = "Buscar usuário por ID",
@@ -85,10 +85,24 @@ public class UsuarioController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/desativar")
+    @Operation(
+            summary = "Desativar usuário",
+            description = "Desativar o status de um usuário."
+    )
     public UsuarioResponse desativar(
             @PathVariable Long id) {
 
         return usuarioService.desativar(id);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}/ativar")
+    @Operation(
+            summary = "Ativar usuário",
+            description = "Ativar o status de um usuário."
+    )
+    public UsuarioResponse ativar(@PathVariable Long id) {
+        return usuarioService.ativar(id);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

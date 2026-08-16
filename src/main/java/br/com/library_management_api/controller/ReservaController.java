@@ -41,7 +41,7 @@ public class ReservaController {
         return reservaService.cadastrar(request);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','USUARIO')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping
     @Operation(
             summary = "Listar reservas",

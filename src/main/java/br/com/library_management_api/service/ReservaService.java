@@ -48,19 +48,44 @@ public class ReservaService {
     public ReservaResponse cadastrar(ReservaRequest request) {
 
         Usuario usuario = usuarioRepository.findById(request.getUsuarioId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
                                 "Usuário com ID " + request.getUsuarioId() + " não encontrado."));
+
+        if (!usuario.getAtivo()) {
+            throw new BusinessException(
+                    "Usuário inativo. Não é possível realizar reservas."
+            );
+        }
+
+        String emailLogado = SecurityUtil.getUsuarioLogado();
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        boolean isAdmin =
+                authentication.getAuthorities()
+                        .stream()
+                        .anyMatch(
+                                role -> role.getAuthority()
+                                        .equals("ROLE_ADMIN")
+                        );
+
+        if (!isAdmin &&
+                !usuario.getEmail()
+                        .equals(emailLogado)) {
+
+            throw new BusinessException(
+                    "Você só pode fazer suas próprias reservas."
+            );
+        }
 
         Livro livro = livroRepository.findById(request.getLivroId())
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Livro com ID " + request.getLivroId() + " não encontrado."));
-
-        if (!usuario.getAtivo()) {
-            throw new BusinessException(
-                    "Usuário inativo não pode realizar reservas.");
-        }
 
         if (livro.getDisponivel()) {
             throw new BusinessException(
@@ -145,6 +170,31 @@ public class ReservaService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Reserva com ID " + id + " não encontrada."));
+
+        String emailLogado = SecurityUtil.getUsuarioLogado();
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        boolean isAdmin =
+                authentication.getAuthorities()
+                        .stream()
+                        .anyMatch(role ->
+                                role.getAuthority()
+                                        .equals("ROLE_ADMIN")
+                        );
+
+        if (!isAdmin &&
+                !reserva.getUsuario()
+                        .getEmail()
+                        .equals(emailLogado)) {
+
+            throw new BusinessException(
+                    "Você só pode cancelar suas próprias reservas."
+            );
+        }
 
         if (reserva.getStatus() == StatusReserva.CANCELADA) {
             throw new BusinessException(

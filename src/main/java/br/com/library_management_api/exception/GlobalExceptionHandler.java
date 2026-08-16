@@ -19,49 +19,61 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ErrorResponse handleResourceNotFound(
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(
             ResourceNotFoundException ex,
             HttpServletRequest request) {
 
-        return ErrorResponse.builder()
+        ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.NOT_FOUND.value())
                 .error(HttpStatus.NOT_FOUND.getReasonPhrase())
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
                 .build();
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(error);
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
-    public ErrorResponse handleDuplicateResource(
+    public ResponseEntity<ErrorResponse> handleDuplicateResource(
             DuplicateResourceException ex,
             HttpServletRequest request) {
 
-        return ErrorResponse.builder()
+        ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.CONFLICT.value())
                 .error(HttpStatus.CONFLICT.getReasonPhrase())
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
                 .build();
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(error);
     }
 
     @ExceptionHandler(BusinessException.class)
-    public ErrorResponse handleBusiness(
+    public ResponseEntity<ErrorResponse> handleBusiness(
             BusinessException ex,
             HttpServletRequest request) {
 
-        return ErrorResponse.builder()
+        ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
                 .build();
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ValidationErrorResponse handleValidation(
+    public ResponseEntity<ValidationErrorResponse> handleValidation(
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
 
@@ -71,7 +83,7 @@ public class GlobalExceptionHandler {
             errors.put(field.getField(), field.getDefaultMessage());
         }
 
-        return ValidationErrorResponse.builder()
+        ValidationErrorResponse error = ValidationErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
@@ -79,34 +91,46 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .fields(errors)
                 .build();
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ErrorResponse handleConstraintViolation(
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(
             ConstraintViolationException ex,
             HttpServletRequest request) {
 
-        return ErrorResponse.builder()
+        ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
                 .build();
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ErrorResponse handleMessageNotReadable(
+    public ResponseEntity<ErrorResponse> handleMessageNotReadable(
             HttpMessageNotReadableException ex,
             HttpServletRequest request) {
 
-        return ErrorResponse.builder()
+        ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
                 .message("JSON inválido ou mal formatado.")
                 .path(request.getRequestURI())
                 .build();
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)

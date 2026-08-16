@@ -28,7 +28,7 @@ public class SecurityConfig {
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
-            JwtAuthenticationEntryPoint authenticationEntryPoint, JwtAuthenticationEntryPoint authenticationEntryPoint1,
+            JwtAuthenticationEntryPoint authenticationEntryPoint,
             UserDetailsServiceImpl userDetailsService,
             PasswordEncoder passwordEncoder
     ) {

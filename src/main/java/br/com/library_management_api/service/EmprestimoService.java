@@ -2,7 +2,6 @@ package br.com.library_management_api.service;
 
 import br.com.library_management_api.dto.request.EmprestimoRequest;
 import br.com.library_management_api.dto.response.EmprestimoResponse;
-import br.com.library_management_api.dto.response.ReservaResponse;
 import br.com.library_management_api.entity.Emprestimo;
 import br.com.library_management_api.entity.Livro;
 import br.com.library_management_api.entity.Reserva;
@@ -25,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,6 +54,12 @@ public class EmprestimoService {
                 .orElseThrow(
                         () -> new ResourceNotFoundException(
                                 "Usuário com ID " + request.getUsuarioId() + " não encontrado."));
+
+        if (!usuario.getAtivo()) {
+            throw new BusinessException(
+                    "Usuário inativo. Não é possível realizar empréstimo."
+            );
+        }
 
         Livro livro = livroRepository.findById(request.getLivroId())
                 .orElseThrow(
@@ -111,6 +115,7 @@ public class EmprestimoService {
     public List<EmprestimoResponse> cadastrarEmLote(
             List<EmprestimoRequest> requests
     ) {
+
         return requests.stream()
                 .map(this::cadastrar)
                 .toList();
@@ -155,7 +160,6 @@ public class EmprestimoService {
                     "Você só pode acessar seus próprios empréstimos."
             );
         }
-
 
         return converterParaResponse(emprestimo);
     }
@@ -235,6 +239,38 @@ public class EmprestimoService {
     }
 
     public List<EmprestimoResponse> buscarPorUsuario(Long usuarioId) {
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Usuário com ID " + usuarioId + " não encontrado."
+                        ));
+
+        String emailLogado = SecurityUtil.getUsuarioLogado();
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        boolean isAdmin =
+                authentication
+                        .getAuthorities()
+                        .stream()
+                        .anyMatch(role -> role
+                                .getAuthority()
+                                .equals("ROLE_ADMIN")
+                );
+
+        if (!isAdmin &&
+                !usuario
+                        .getEmail()
+                        .equals(emailLogado)
+        ) {
+            throw new BusinessException(
+                    "Você só pode acessar seus próprios empréstimos."
+            );
+        }
 
         return emprestimoRepository.findByUsuarioId(usuarioId)
                 .stream()

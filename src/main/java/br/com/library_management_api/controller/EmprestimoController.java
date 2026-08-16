@@ -57,6 +57,7 @@ public class EmprestimoController {
         return emprestimoService.cadastrarEmLote(requests);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     @Operation(
             summary = "Listar empréstimos",
@@ -94,7 +95,7 @@ public class EmprestimoController {
         return emprestimoService.devolver(id);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USUARIO')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/ativos")
     @Operation(
             summary = "Listar empréstimos ativos",
@@ -104,7 +105,7 @@ public class EmprestimoController {
         return emprestimoService.listarAtivos();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USUARIO')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/devolvidos")
     @Operation(
             summary = "Listar empréstimos devolvidos",
@@ -125,6 +126,7 @@ public class EmprestimoController {
         return emprestimoService.buscarPorUsuario(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/livro/{id}")
     @Operation(
             summary = "Buscar empréstimos por livro",
